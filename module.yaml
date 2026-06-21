@@ -1,0 +1,36 @@
+# module.yaml — universal Botmother module descriptor (repo root)
+# Module Manager shu faylni o'qib modulni build+run qiladi.
+apiVersion: botmother.module/v1
+
+module:
+  id: demo                      # global unique slug; node turlari shu bilan namespace qilinadi (demo.Echo)
+  name: Demo Module
+  version: 0.1.0
+  description: Reference module — bitta Echo va bitta Upper node (JSON-RPC 2.0 kontrakt namunasi)
+  author: botmother
+  icon: sparkles                # lucide icon name (constructor iconName fallback)
+
+runtime:
+  dockerfile: Dockerfile        # repo'da Dockerfile bor → image shundan build qilinadi
+  port: 8100                    # modul JSON-RPC HTTP serveri shu portda
+  healthcheck: /health          # GET, 200 kutiladi
+  env:
+    - LOG_LEVEL=info
+
+contract:
+  jsonrpc: "2.0"
+  endpoint: /rpc                # bitta JSON-RPC endpoint (POST)
+  methods: [describe, node.execute]   # FAZA 0: triggerlar (trigger.match) keyin
+  push_trigger: false
+
+resources:
+  cpu: "250m"
+  memory: "128Mi"
+
+# Modul beradigan node turlari (describe() bilan mos bo'lishi shart — tez routing uchun).
+provides:
+  nodes:
+    - type: demo.Echo
+      trigger: false
+    - type: demo.Upper
+      trigger: false
