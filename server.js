@@ -16,6 +16,33 @@ const AUTH_TOKEN = process.env.MODULE_AUTH_TOKEN || ""; // bo'sh = autentifikats
 // ---------------------------------------------------------------------------
 const MODULE = { id: "demo", name: "Demo Module", version: "0.1.0" };
 
+// Modul hujjati (markdown) — describe bilan birga olinadi va backend'da saqlanadi.
+const DOCS = `# Demo Module
+
+Botmother tashqi modul namunasi. JSON-RPC 2.0 kontraktini ko'rsatadi.
+
+## Node turlari
+
+### \`demo.Echo\` (action)
+Kiritilgan matnni o'zgaruvchiga yozadi.
+- **Kirish:** \`input\` — matn (\`{{message.text}}\` yoki literal)
+- **Chiqish:** \`echo_output\` o'zgaruvchisi
+
+### \`demo.Upper\` (action)
+Matnni KATTA harfga aylantiradi.
+- **Kirish:** \`text\` — matn
+- **Chiqish:** \`upper_output\` o'zgaruvchisi
+
+### \`demo.OnKeyword\` (trigger)
+Xabar matnida kalit so'z bo'lsa flow'ni ishga tushiradi (event-match).
+- **Sozlama:** \`keyword\` — kalit so'z
+- **Chiqish:** \`matched_keyword\` o'zgaruvchisi
+
+## Misol
+1. \`Kalit so'z kelganda\` (keyword: \`salom\`) → \`Echo\` (input: \`{{message.text}}\`) → \`Matn yuborish\` (\`{{echo_output}}\`)
+2. Bot "salom" so'zli xabar kelganda ishlaydi va matnni qaytaradi.
+`;
+
 const NODES = [
   {
     type: "demo.Echo",
@@ -121,6 +148,9 @@ function handleRpc(req) {
 
   if (method === "describe") {
     return reply({ module: MODULE, nodes: NODES });
+  }
+  if (method === "docs") {
+    return reply({ markdown: DOCS });
   }
   if (method === "node.execute") {
     const fn = EXECUTORS[params && params.type];
