@@ -65,9 +65,11 @@ Modul **4 ta metod**ni qo'llab-quvvatlaydi:
 Health: `GET {base}/health` → `200 {"ok":true,"module":"<id>"}`.
 
 ### Engine yuboradigan env'lar
-Modul pod'iga engine/backend quyidagilarni beradi:
-`PORT`, `MODULE_AUTH_TOKEN` (bo'sh bo'lsa auth tekshirilmaydi), `MODULE_SLUG`,
-`PROJECT_ID`.
+Shared pod'ga backend quyidagilarni beradi:
+`PORT`, `MODULE_AUTH_TOKEN` (bo'sh bo'lsa auth tekshirilmaydi), `MODULE_SLUG`.
+Pod barcha loyihalar uchun umumiy, shuning uchun `PROJECT_ID` berilmaydi —
+loyiha konteksti har `node.execute` chaqirig'ida (`chat_id`, `context`,
+`credentials`) keladi.
 
 ---
 
@@ -380,9 +382,13 @@ CMD ["node", "server.js"]
    - `slug` (= module.id), `name`, `description`, `icon` (lucide),
      `github_url`, `image` (registry yo'li), `port`, `auth_token` (ixtiyoriy),
      `active: true`.
-3. Modul **per-project** yoqiladi (constructor → 🧩 Modullar → O'rnatish).
-   Backend har loyiha uchun modul pod'ini avtomatik deploy qiladi.
-4. **Manifest yangilash:** modul kodi/o'lchami o'zgarганда admin → Modullar →
+3. Modul **shared** — barcha loyihalar uchun **bitta** pod `module-{slug}`.
+   Loyiha modulni o'rnatganda (constructor → 🧩 Modullar → O'rnatish) shunchaki
+   **ishlatish huquqini** oladi (yangi pod yaratilmaydi). Pod birinchi
+   o'rnatishda idempotent yaratiladi, oxirgi loyiha o'chirganда olib tashlanadi.
+   Credential'ни engine resolve qilib node.execute'да uzatadi, shuning uchun
+   shared pod'ga `PROJECT_ID` shart emas (stateless, per-call).
+4. **Manifest yangilash:** modul kodi/o'lchami o'zgарганда admin → Modullar →
    **Yangilash** (yoki loyiha ochilganda 120s TTL bilan avtomatik).
 
 ---
