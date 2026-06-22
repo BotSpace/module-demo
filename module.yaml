@@ -6,7 +6,7 @@ module:
   id: demo                      # global unique slug; node turlari shu bilan namespace qilinadi (demo.Echo)
   name: Demo Module
   version: 0.1.0
-  description: Reference module — bitta Echo va bitta Upper node (JSON-RPC 2.0 kontrakt namunasi)
+  description: Reference module — Echo, Upper, AuthHeader (credential), SetVariable, OnKeyword (trigger). JSON-RPC 2.0 kontrakt namunasi.
   author: botmother
   icon: sparkles                # lucide icon name (constructor iconName fallback)
 
@@ -24,11 +24,12 @@ runtime:
   env:
     - LOG_LEVEL=info
 
+# NOTE: contract/provides/resources — tavsifiy (platforma faqat module/source/runtime'ni o'qiydi).
 contract:
   jsonrpc: "2.0"
   endpoint: /rpc                # bitta JSON-RPC endpoint (POST)
-  methods: [describe, node.execute]   # FAZA 0: triggerlar (trigger.match) keyin
-  push_trigger: false
+  methods: [describe, node.execute, trigger.match, docs]   # to'liq kontrakt
+  push_trigger: false           # demo event-match trigger ishlatadi (trigger.match), push emas
 
 resources:
   cpu: "250m"
@@ -41,3 +42,9 @@ provides:
       trigger: false
     - type: demo.Upper
       trigger: false
+    - type: demo.AuthHeader       # credential field ishlatadi
+      trigger: false
+    - type: demo.SetVariable      # dinamik state yozadi
+      trigger: false
+    - type: demo.OnKeyword        # event-match trigger
+      trigger: true
