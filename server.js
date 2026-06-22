@@ -39,6 +39,12 @@ Tanlangan credential'dan HTTP auth header quradi (credential ishlatishga namuna)
 - **Chiqish:** \`auth_header\` (maskalangan), \`cred_type\` o'zgaruvchilari
 - Engine credential_id'ni o'zi resolve qiladi va decrypted sirni \`node.execute\` paytida \`params.credentials.api_credential = {type_key, mode, data}\` sifatida uzatadi. Modulga qo'shimcha token kerak emas.
 
+### \`demo.SetVariable\` (action, dinamik state)
+Foydalanuvchi o'zgaruvchi NOMINI o'zi kiritadi, modul o'sha nomli o'zgaruvchiga qiymat yozadi.
+- **Kirish:** \`variable_name\` — o'zgaruvchi nomi; \`value\` — qiymat (\`{{message.text}}\` kabi shablon mumkin)
+- **Chiqish:** \`{{<variable_name>}}\` — kiritilgan nomli o'zgaruvchi
+- Engine \`value\`dagi \`{{...}}\` ni resolve qilib modulga beradi; modul \`context_updates[variable_name] = value\` qaytaradi. Shu tariqa modul oddiy node'lar kabi state'ga dinamik yozadi.
+
 ### \`demo.OnKeyword\` (trigger)
 Xabar matnida kalit so'z bo'lsa flow'ni ishga tushiradi (event-match).
 - **Sozlama:** \`keyword\` — kalit so'z
@@ -118,6 +124,41 @@ const NODES = [
     producesState: ["auth_header", "cred_type"],
     trigger: false,
   },
+  // DINAMIK STATE node — foydalanuvchi o'zgaruvchi NOMINI o'zi kiritadi, modul
+  // o'sha nomli o'zgaruvchiga qiymat yozadi. Engine {{...}} ni resolve qilib beradi,
+  // shuning uchun value sifatida {{message.text}} kabi shablon ishlatish mumkin.
+  {
+    type: "demo.SetVariable",
+    status: "runtime",
+    category: "integrations",
+    titleKey: "module.demo.setvariable.title",
+    titleFallback: "O'zgaruvchiga yozish",
+    descriptionKey: "module.demo.setvariable.desc",
+    descriptionFallback: "Kiritilgan nomli o'zgaruvchiga qiymat saqlaydi",
+    iconName: "database",
+    colorToken: "emerald",
+    size: { width: 200 },
+    sidebar: { enabled: true, groupId: "integrations", sortOrder: 103, elementType: "demo.SetVariable" },
+    handles: [{ preset: "target-default" }, { preset: "source-default" }],
+    content: [
+      {
+        type: "text",
+        key: "variable_name",
+        label: "O'zgaruvchi nomi",
+        placeholder: "masalan: user_choice",
+        helpText: "Qiymat shu nomli o'zgaruvchiga yoziladi (keyin {{user_choice}})",
+      },
+      {
+        type: "text",
+        key: "value",
+        label: "Qiymat",
+        placeholder: "{{message.text}} yoki literal matn",
+        helpText: "{{...}} bilan boshqa o'zgaruvchilarni ishlatish mumkin",
+      },
+    ],
+    defaults: { variable_name: "", value: "{{message.text}}" },
+    trigger: false,
+  },
   // TRIGGER node — event-match: xabar matnida kalit so'z bo'lsa fire bo'ladi.
   {
     type: "demo.OnKeyword",
@@ -153,6 +194,15 @@ const EXECUTORS = {
     context_updates: { upper_output: String(data.text ?? "").toUpperCase() },
     exit_output: "",
   }),
+  // Dinamik kalit: foydalanuvchi kiritgan variable_name nomli o'zgaruvchiga
+  // value yoziladi. Engine value'dagi {{...}} ni allaqachon resolve qilgan.
+  "demo.SetVariable": ({ data }) => {
+    const name = String(data.variable_name ?? "").trim();
+    if (!name) {
+      return { context_updates: {}, exit_output: "" };
+    }
+    return { context_updates: { [name]: String(data.value ?? "") }, exit_output: "" };
+  },
   // Engine resolve qilib bergan credential sirini ishlatadi.
   // credentials.api_credential = { type_key, mode, data: {...} }
   "demo.AuthHeader": ({ credentials }) => {
