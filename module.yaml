@@ -10,6 +10,13 @@ module:
   author: botmother
   icon: sparkles                # lucide icon name (constructor iconName fallback)
 
+# Modul manbasi — IKKISIDAN BITTASI:
+#   source.github   → platforma kodni klonlab image quradi (platforma-hosted)
+#   source.endpoint → modul allaqachon shu manzilda ishlaydi (self-hosted), build yo'q
+source:
+  github: https://github.com/BotSpace/module-demo
+  # endpoint: https://my-server.com/rpc
+
 runtime:
   dockerfile: Dockerfile        # repo'da Dockerfile bor → image shundan build qilinadi
   port: 8100                    # modul JSON-RPC HTTP serveri shu portda
