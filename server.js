@@ -33,6 +33,12 @@ Matnni KATTA harfga aylantiradi.
 - **Kirish:** \`text\` — matn
 - **Chiqish:** \`upper_output\` o'zgaruvchisi
 
+### \`demo.AuthHeader\` (action, credential)
+Tanlangan credential'dan HTTP auth header quradi (credential ishlatishga namuna).
+- **Kirish:** \`api_credential\` — credential (manifestda \`type: "credential"\`)
+- **Chiqish:** \`auth_header\` (maskalangan), \`cred_type\` o'zgaruvchilari
+- Engine credential_id'ni o'zi resolve qiladi va decrypted sirni \`node.execute\` paytida \`params.credentials.api_credential = {type_key, mode, data}\` sifatida uzatadi. Modulga qo'shimcha token kerak emas.
+
 ### \`demo.OnKeyword\` (trigger)
 Xabar matnida kalit so'z bo'lsa flow'ni ishga tushiradi (event-match).
 - **Sozlama:** \`keyword\` — kalit so'z
@@ -88,6 +94,30 @@ const NODES = [
     producesState: ["upper_output"],
     trigger: false,
   },
+  // CREDENTIAL ishlatadigan node — manifestda `credential` field so'raydi.
+  // Engine credential_id'ni resolve qilib, decrypted sirni node.execute'da
+  // params.credentials[field_key] = {type_key, mode, data} sifatida uzatadi.
+  {
+    type: "demo.AuthHeader",
+    status: "runtime",
+    category: "integrations",
+    titleKey: "module.demo.authheader.title",
+    titleFallback: "Auth header (credential)",
+    descriptionKey: "module.demo.authheader.desc",
+    descriptionFallback: "Tanlangan credential'dan HTTP auth header quradi",
+    iconName: "credit-card",
+    colorToken: "emerald",
+    size: { width: 300, minHeight: 140 },
+    sidebar: { enabled: true, groupId: "integrations", sortOrder: 102, elementType: "demo.AuthHeader" },
+    handles: [{ preset: "target-default" }, { preset: "source-default" }],
+    content: [
+      { type: "credential", key: "api_credential", label: "Credential", required: true },
+      { type: "text", key: "note", label: "Izoh", placeholder: "ixtiyoriy" },
+    ],
+    defaults: { api_credential: "", note: "" },
+    producesState: ["auth_header", "cred_type"],
+    trigger: false,
+  },
   // TRIGGER node — event-match: xabar matnida kalit so'z bo'lsa fire bo'ladi.
   {
     type: "demo.OnKeyword",
@@ -123,6 +153,35 @@ const EXECUTORS = {
     context_updates: { upper_output: String(data.text ?? "").toUpperCase() },
     exit_output: "",
   }),
+  // Engine resolve qilib bergan credential sirini ishlatadi.
+  // credentials.api_credential = { type_key, mode, data: {...} }
+  "demo.AuthHeader": ({ credentials }) => {
+    const cred = (credentials && credentials.api_credential) || null;
+    if (!cred) {
+      return { context_updates: { auth_header: "", cred_type: "" }, exit_output: "" };
+    }
+    const d = cred.data || {};
+    let header = "";
+    switch (cred.mode) {
+      case "bearer":
+        header = `Bearer ${d.token || d.api_key || ""}`;
+        break;
+      case "basic":
+        header = `Basic ${Buffer.from(`${d.username || ""}:${d.password || ""}`).toString("base64")}`;
+        break;
+      case "header":
+        header = String(d.value || "");
+        break;
+      default:
+        header = String(d.api_key || d.token || "");
+    }
+    // Sirni flow context'iga to'liq oqizmaymiz — maskalaymiz (demo amaliyoti).
+    const masked = header.length > 12 ? `${header.slice(0, 12)}…` : header;
+    return {
+      context_updates: { auth_header: masked, cred_type: cred.type_key || "" },
+      exit_output: "",
+    };
+  },
 };
 
 // ---------------------------------------------------------------------------
